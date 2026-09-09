@@ -12,6 +12,7 @@ const {
   registerSchemesMock,
   setDesktopNameMock,
   mkdirSyncMock,
+  existsSyncMock,
   writeFileSyncMock,
 } = vi.hoisted(() => ({
   appendSwitchMock: vi.fn(),
@@ -20,6 +21,7 @@ const {
   registerSchemesMock: vi.fn(),
   setDesktopNameMock: vi.fn(),
   mkdirSyncMock: vi.fn(),
+  existsSyncMock: vi.fn(),
   writeFileSyncMock: vi.fn(),
 }));
 
@@ -39,6 +41,7 @@ vi.mock("electron", () => ({
 }));
 
 vi.mock("node:fs", () => ({
+  existsSync: existsSyncMock,
   readFileSync: () => "{}",
   mkdirSync: mkdirSyncMock,
   writeFileSync: writeFileSyncMock,
@@ -54,6 +57,7 @@ describe("DesktopPreReadyPlatform", () => {
     registerSchemesMock.mockReset();
     setDesktopNameMock.mockReset();
     mkdirSyncMock.mockReset();
+    existsSyncMock.mockReset();
     writeFileSyncMock.mockReset();
   });
 
@@ -83,6 +87,7 @@ describe("DesktopPreReadyPlatform", () => {
         vi.stubEnv("XDG_DATA_HOME", "/xdg");
         vi.stubEnv("APPIMAGE", "/Applications/current.AppImage");
         getSwitchValueMock.mockReturnValue("");
+        existsSyncMock.mockReturnValue(previousEntry !== undefined);
         let desktopName = "t3code.desktop";
         let desktopEntry = previousEntry;
         setDesktopNameMock.mockImplementation((name: string) => {
