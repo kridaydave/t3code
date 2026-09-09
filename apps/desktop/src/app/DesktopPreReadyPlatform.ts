@@ -67,10 +67,7 @@ export const make = Effect.gen(function* () {
         "applications",
       );
       NodeFS.mkdirSync(applicationsDir, { recursive: true });
-      const desktopEntryPath = NodePath.posix.join(
-        applicationsDir,
-        linux.linuxDesktopEntryName,
-      );
+      const desktopEntryPath = NodePath.posix.join(applicationsDir, linux.linuxDesktopEntryName);
       const newEntryContent = renderUrlHandlerDesktopEntry({
         displayName: resolveDesktopAppBranding({
           isDevelopment: linux.isDevelopment,
@@ -81,9 +78,11 @@ export const make = Effect.gen(function* () {
       });
       // Only rewrite the desktop entry when content actually changed to avoid
       // unnecessary filesystem writes and desktop database notifications on every
-      // cold boot. The URL handler retries with the full environment and logs
-      // failures, so a stale entry from a removed AppImage is eventually corrected.
-      const existingContent = NodeFS.readFileSync(desktopEntryPath, "utf8").trim();
+      // cold boot. A missing entry (fresh profile) is just empty content so the
+      // initial launch still writes it.
+      const existingContent = NodeFS.existsSync(desktopEntryPath)
+        ? NodeFS.readFileSync(desktopEntryPath, "utf8").trim()
+        : "";
       if (existingContent !== newEntryContent) {
         NodeFS.writeFileSync(desktopEntryPath, newEntryContent, "utf8");
       }

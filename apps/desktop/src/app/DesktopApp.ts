@@ -212,9 +212,12 @@ const bootstrap = Effect.gen(function* () {
   if (!(yield* Ref.get(state.quitting))) {
     // Show a connecting splash on Linux cold boot so the app feels responsive
     // instead of presenting no window until the backend is ready. WSL-only mode
-    // already does this; extend it to all Linux launches where the backend is
-    // not yet running. The splash is dismissed when handleBackendReady fires.
-    if (environment.platform === "linux") {
+    // already does this on Windows; keep that path and extend to all Linux
+    // launches where the backend is not yet running.
+    if (
+      environment.platform === "linux" ||
+      (settings.wslOnly === true && settings.wslBackendEnabled === true)
+    ) {
       yield* desktopWindow.showConnectingSplash;
     }
     yield* primaryBackend.start;
