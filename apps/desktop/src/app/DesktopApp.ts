@@ -249,10 +249,14 @@ const startup = Effect.gen(function* () {
   const environment = yield* DesktopEnvironment.DesktopEnvironment;
 
   yield* shellEnvironment.installIntoProcess;
-  // Mark the process environment so the server's fixPath knows the desktop
-  // already did the login-shell probe. This avoids a redundant bash -ilc
-  // spawn when the server starts in the same process.
-  process.env.__T3CODE_SHELL_ENV_INSTALLED = "1";
+  // Tell the server's fixPath to skip its own login-shell probe when the
+  // desktop already hydrated PATH. Only set this marker when we actually
+  // knew which shell to probe (SHELL is set) — otherwise the server should
+  // do its own probe with the user's real shell (zsh, fish, ...) instead of
+  // trusting the desktop's fallback probe.
+  if ((process.env.SHELL ?? "").trim().length > 0) {
+    process.env.__T3CODE_SHELL_ENV_INSTALLED = "1";
+  }
   const hasCommandLinePasswordStore =
     preReadyElectronOptions.linuxPasswordStoreCommandLine !== null;
   const linuxElectronOptions =
