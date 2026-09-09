@@ -875,11 +875,6 @@ export const make = (options?: StartupOptions) =>
         }),
       );
 
-      yield* runStartupPhase("provider-sessions.reconcile", reconcileProviderSessions);
-
-      yield* Effect.logDebug("startup phase: syncing clean projects");
-      yield* runStartupPhase("projects.auto-pull", syncAutoPullProjects);
-
       const welcomeBase = yield* resolveWelcomeBase;
       const environment = yield* serverEnvironment.getDescriptor;
       yield* Effect.logDebug("startup phase: preparing welcome payload");
@@ -982,6 +977,20 @@ export const make = (options?: StartupOptions) =>
           },
         }),
       );
+
+      // Defer non-critical startup work until after the server is ready to serve
+      // commands. reconcileProviderSessions and autoPullProjects can run in the
+      // background without blocking the first paint on desktop or the ready event
+      // for remote clients.
+      yield* forkParked(
+        Effect.gen(function* () {
+          yield* runStartupPhase("provider-sessions.reconcile", reconcileProviderSessions);
+
+          yield* Effect.logDebug("startup phase: syncing clean projects");
+          yield* runStartupPhase("projects.auto-pull", syncAutoPullProjects);
+        }),
+      );
+
       yield* Effect.logDebug("startup phase: complete");
     }).pipe(
       Effect.annotateSpans({
