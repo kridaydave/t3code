@@ -78,11 +78,16 @@ export const make = Effect.gen(function* () {
       });
       // Only rewrite the desktop entry when content actually changed to avoid
       // unnecessary filesystem writes and desktop database notifications on every
-      // cold boot. A missing entry (fresh profile) is just empty content so the
-      // initial launch still writes it.
-      const existingContent = NodeFS.existsSync(desktopEntryPath)
-        ? NodeFS.readFileSync(desktopEntryPath, "utf8").trim()
-        : "";
+      // cold boot. A missing or unreadable entry is treated as absent content so
+      // the initial launch still writes it. Both sides are compared unchanged —
+      // trimming only one side would force a rewrite on every boot when the
+      // written content ends in a newline.
+      let existingContent: string | null = null;
+      try {
+        existingContent = NodeFS.readFileSync(desktopEntryPath, "utf8");
+      } catch {
+        // Missing or unreadable entry is treated as absent.
+      }
       if (existingContent !== newEntryContent) {
         NodeFS.writeFileSync(desktopEntryPath, newEntryContent, "utf8");
       }

@@ -248,11 +248,6 @@ const startup = Effect.gen(function* () {
   const updates = yield* DesktopUpdates.DesktopUpdates;
   const environment = yield* DesktopEnvironment.DesktopEnvironment;
 
-  yield* electronApp.whenReady.pipe(
-    Effect.withSpan("desktop.electron.whenReady"),
-    Effect.catchCause((cause) => fatalStartupCause("whenReady", cause)),
-  );
-  yield* logStartupInfo("app ready");
   yield* shellEnvironment.installIntoProcess;
   // Mark the process environment so the server's fixPath knows the desktop
   // already did the login-shell probe. This avoids a redundant bash -ilc
@@ -264,6 +259,9 @@ const startup = Effect.gen(function* () {
     environment.platform === "linux" && !hasCommandLinePasswordStore
       ? DesktopPreReadyPlatform.resolveEarlyLinuxElectronOptionsFromProcess()
       : preReadyElectronOptions.linux;
+  // Resolved after the shell probe so XDG_CURRENT_DESKTOP can come from the
+  // login shell. These switches must be set before whenReady resolves, or
+  // Chromium ignores them.
   if (linuxElectronOptions !== null && !hasCommandLinePasswordStore) {
     if (
       linuxElectronOptions.passwordStore !== null ||
@@ -296,6 +294,11 @@ const startup = Effect.gen(function* () {
   yield* appIdentity.configure;
   yield* lifecycle.register;
   yield* clerk.configure;
+  yield* electronApp.whenReady.pipe(
+    Effect.withSpan("desktop.electron.whenReady"),
+    Effect.catchCause((cause) => fatalStartupCause("whenReady", cause)),
+  );
+  yield* logStartupInfo("app ready");
   if (environment.platform === "linux") {
     const selectedBackend = yield* safeStorage.selectedStorageBackend;
     yield* logStartupInfo("safe storage ready", {
