@@ -24,7 +24,10 @@ interface ReviewMeasureStarted {
   readonly startedAt: number;
 }
 
-function startReviewMeasure(name: string, perf: ReviewPerformanceLike | null): ReviewMeasureStarted {
+function startReviewMeasure(
+  name: string,
+  perf: ReviewPerformanceLike | null,
+): ReviewMeasureStarted {
   const marker = `${REVIEW_PERF_PREFIX}.${name}.${reviewPerfSequence++}`;
   const startMark = `${marker}.start`;
   const endMark = `${marker}.end`;
