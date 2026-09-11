@@ -435,10 +435,10 @@ function AboutVersionSection() {
                 </SelectValue>
               </SelectTrigger>
               <SelectPopup align="end" alignItemWithTrigger={false}>
-                <SelectItem hideIndicator value="latest">
+                <SelectItem value="latest">
                   Stable
                 </SelectItem>
-                <SelectItem hideIndicator value="nightly">
+                <SelectItem value="nightly">
                   Nightly
                 </SelectItem>
               </SelectPopup>
@@ -463,10 +463,10 @@ function AboutVersionSection() {
                 <SelectValue>{HOSTED_APP_CHANNEL_LABEL}</SelectValue>
               </SelectTrigger>
               <SelectPopup align="end" alignItemWithTrigger={false}>
-                <SelectItem hideIndicator value="latest">
+                <SelectItem value="latest">
                   Latest
                 </SelectItem>
-                <SelectItem hideIndicator value="nightly">
+                <SelectItem value="nightly">
                   Nightly
                 </SelectItem>
               </SelectPopup>
@@ -838,13 +838,13 @@ function BackgroundActivityAdvancedDialog({
                   <SelectValue>{BACKGROUND_ACTIVITY_PROFILE_LABELS[activeProfile]}</SelectValue>
                 </SelectTrigger>
                 <SelectPopup align="end" alignItemWithTrigger={false}>
-                  <SelectItem hideIndicator value="balanced">
+                  <SelectItem value="balanced">
                     {BACKGROUND_ACTIVITY_PROFILE_LABELS.balanced}
                   </SelectItem>
-                  <SelectItem hideIndicator value="performance">
+                  <SelectItem value="performance">
                     {BACKGROUND_ACTIVITY_PROFILE_LABELS.performance}
                   </SelectItem>
-                  <SelectItem hideIndicator value="battery-saver">
+                  <SelectItem value="battery-saver">
                     {BACKGROUND_ACTIVITY_PROFILE_LABELS["battery-saver"]}
                   </SelectItem>
                 </SelectPopup>
@@ -1236,7 +1236,7 @@ export function AppearanceSettingsPanel() {
                 </SelectTrigger>
                 <SelectPopup align="end" alignItemWithTrigger={false}>
                   {Object.entries(ENVIRONMENT_IDENTIFICATION_LABELS).map(([value, label]) => (
-                    <SelectItem hideIndicator key={value} value={value}>
+                    <SelectItem key={value} value={value}>
                       {label}
                     </SelectItem>
                   ))}
@@ -1849,7 +1849,7 @@ function FontFamilySettingsRow({
         <SelectPopup align="end" alignItemWithTrigger={false}>
           {Array.from({ length: size.max - size.min + 1 }, (_, index) => size.min + index).map(
             (px) => (
-              <SelectItem hideIndicator key={px} value={String(px)}>
+              <SelectItem key={px} value={String(px)}>
                 {px} px
               </SelectItem>
             ),
@@ -2269,13 +2269,13 @@ export function GeneralSettingsPanel() {
                 <SelectValue>{TIMESTAMP_FORMAT_LABELS[settings.timestampFormat]}</SelectValue>
               </SelectTrigger>
               <SelectPopup align="end" alignItemWithTrigger={false}>
-                <SelectItem hideIndicator value="locale">
+                <SelectItem value="locale">
                   {TIMESTAMP_FORMAT_LABELS.locale}
                 </SelectItem>
-                <SelectItem hideIndicator value="12-hour">
+                <SelectItem value="12-hour">
                   {TIMESTAMP_FORMAT_LABELS["12-hour"]}
                 </SelectItem>
-                <SelectItem hideIndicator value="24-hour">
+                <SelectItem value="24-hour">
                   {TIMESTAMP_FORMAT_LABELS["24-hour"]}
                 </SelectItem>
               </SelectPopup>
@@ -2331,10 +2331,10 @@ export function GeneralSettingsPanel() {
                 <SelectValue>{DIFF_LAYOUT_LABELS[settings.diffLayout]}</SelectValue>
               </SelectTrigger>
               <SelectPopup align="end" alignItemWithTrigger={false}>
-                <SelectItem hideIndicator value="stacked">
+                <SelectItem value="stacked">
                   {DIFF_LAYOUT_LABELS.stacked}
                 </SelectItem>
-                <SelectItem hideIndicator value="split">
+                <SelectItem value="split">
                   {DIFF_LAYOUT_LABELS.split}
                 </SelectItem>
               </SelectPopup>
@@ -2527,16 +2527,16 @@ export function GeneralSettingsPanel() {
                   </SelectValue>
                 </SelectTrigger>
                 <SelectPopup align="end" alignItemWithTrigger={false}>
-                  <SelectItem hideIndicator value="balanced">
+                  <SelectItem value="balanced">
                     {BACKGROUND_ACTIVITY_PROFILE_LABELS.balanced}
                   </SelectItem>
-                  <SelectItem hideIndicator value="performance">
+                  <SelectItem value="performance">
                     {BACKGROUND_ACTIVITY_PROFILE_LABELS.performance}
                   </SelectItem>
-                  <SelectItem hideIndicator value="battery-saver">
+                  <SelectItem value="battery-saver">
                     {BACKGROUND_ACTIVITY_PROFILE_LABELS["battery-saver"]}
                   </SelectItem>
-                  <SelectItem hideIndicator value="advanced">
+                  <SelectItem value="advanced">
                     {BACKGROUND_ACTIVITY_PROFILE_OPTION_LABELS.advanced}
                   </SelectItem>
                 </SelectPopup>
@@ -2754,7 +2754,7 @@ export function GeneralSettingsPanel() {
                 </SelectTrigger>
                 <SelectPopup align="end" alignItemWithTrigger={false}>
                   {Object.entries(QUIT_CONFIRMATION_MODE_LABELS).map(([value, label]) => (
-                    <SelectItem hideIndicator key={value} value={value}>
+                    <SelectItem key={value} value={value}>
                       {label}
                     </SelectItem>
                   ))}
