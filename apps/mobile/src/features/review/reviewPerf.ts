@@ -24,6 +24,7 @@ interface ReviewMeasureStarted {
   readonly startedAt: number;
 }
 
+/** Opens a sequenced perf interval for a review task and returns its marks. */
 function startReviewMeasure(
   name: string,
   perf: ReviewPerformanceLike | null,
@@ -37,6 +38,7 @@ function startReviewMeasure(
   return { startMark, endMark, startedAt };
 }
 
+/** Closes the interval from startReviewMeasure, records it, and logs the duration. */
 function finishReviewMeasure(
   name: string,
   perf: ReviewPerformanceLike | null,
