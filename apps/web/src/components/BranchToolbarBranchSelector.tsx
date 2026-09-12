@@ -550,10 +550,13 @@ export function BranchToolbarBranchSelector({
         eventDetails.cancel?.();
         return;
       }
-      // Only trigger presses arm the suppress window: an item-press or
-      // outside-press close must not eat a deliberate reopen right after.
+      // Only trigger presses arm the suppress window. A close from any
+      // other reason disarms it, so picking an item (or pressing outside)
+      // never eats a deliberate reopen right after.
       if (eventDetails?.reason === "trigger-press") {
         lastBranchMenuToggleAtRef.current = Date.now();
+      } else if (!open) {
+        lastBranchMenuToggleAtRef.current = 0;
       }
       previousBranchListScrollTopRef.current = null;
       setIsBranchMenuOpen(open);
@@ -725,6 +728,16 @@ export function BranchToolbarBranchSelector({
         index={index}
         value={itemValue}
         className="pe-1.5"
+        onClick={() => {
+          // onValueChange stays silent when the pick equals the current
+          // value, so same-value presses (worktree-base pin, hop into an
+          // existing worktree) are handled here. Anything else flows through
+          // onValueChange; a same-value echo there is dropped by the dedup
+          // above, so this can never double-run a checkout.
+          if (itemValue === resolvedActiveBranch) {
+            selectBranch(refName);
+          }
+        }}
         onContextMenu={(event) => handleBranchContextMenu(event, itemValue)}
       >
         <div className="flex w-full min-w-0 items-center justify-between gap-2">

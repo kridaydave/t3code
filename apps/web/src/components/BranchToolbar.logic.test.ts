@@ -883,6 +883,17 @@ describe("shouldSuppressRapidBranchMenuToggle", () => {
       }),
     ).toBe(false);
   });
+
+  it("lets keyboard presses through inside the window", () => {
+    expect(
+      shouldSuppressRapidBranchMenuToggle({
+        reason: "trigger-press",
+        nativeDetail: 0,
+        lastToggleAt: 1000,
+        now: 1100,
+      }),
+    ).toBe(false);
+  });
 });
 
 describe("nativePressDetail", () => {

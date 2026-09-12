@@ -333,6 +333,10 @@ export function shouldSuppressRapidBranchMenuToggle(input: {
   now: number;
 }): boolean {
   if (input.reason !== "trigger-press") return false;
+  // Keyboard and programmatic presses carry no click count, so there is no
+  // double-press gesture to swallow: exempt them, or a fast Enter to close
+  // would stick the menu open instead.
+  if (input.nativeDetail < 1) return false;
   if (input.nativeDetail > 1) return true;
   return (
     input.now >= input.lastToggleAt &&
