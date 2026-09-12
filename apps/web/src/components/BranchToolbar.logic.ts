@@ -334,6 +334,8 @@ export function shouldSuppressRapidBranchMenuToggle(input: {
 }): boolean {
   if (input.reason !== "trigger-press") return false;
   if (input.nativeDetail > 1) return true;
-  return input.now >= input.lastToggleAt &&
-    input.now - input.lastToggleAt < BRANCH_MENU_RAPID_TOGGLE_SUPPRESS_MS;
+  return (
+    input.now >= input.lastToggleAt &&
+    input.now - input.lastToggleAt < BRANCH_MENU_RAPID_TOGGLE_SUPPRESS_MS
+  );
 }

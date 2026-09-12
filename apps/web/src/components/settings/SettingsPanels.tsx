@@ -435,12 +435,8 @@ function AboutVersionSection() {
                 </SelectValue>
               </SelectTrigger>
               <SelectPopup align="end" alignItemWithTrigger={false}>
-                <SelectItem value="latest">
-                  Stable
-                </SelectItem>
-                <SelectItem value="nightly">
-                  Nightly
-                </SelectItem>
+                <SelectItem value="latest">Stable</SelectItem>
+                <SelectItem value="nightly">Nightly</SelectItem>
               </SelectPopup>
             </Select>
           }
@@ -463,12 +459,8 @@ function AboutVersionSection() {
                 <SelectValue>{HOSTED_APP_CHANNEL_LABEL}</SelectValue>
               </SelectTrigger>
               <SelectPopup align="end" alignItemWithTrigger={false}>
-                <SelectItem value="latest">
-                  Latest
-                </SelectItem>
-                <SelectItem value="nightly">
-                  Nightly
-                </SelectItem>
+                <SelectItem value="latest">Latest</SelectItem>
+                <SelectItem value="nightly">Nightly</SelectItem>
               </SelectPopup>
             </Select>
           }
@@ -2269,15 +2261,9 @@ export function GeneralSettingsPanel() {
                 <SelectValue>{TIMESTAMP_FORMAT_LABELS[settings.timestampFormat]}</SelectValue>
               </SelectTrigger>
               <SelectPopup align="end" alignItemWithTrigger={false}>
-                <SelectItem value="locale">
-                  {TIMESTAMP_FORMAT_LABELS.locale}
-                </SelectItem>
-                <SelectItem value="12-hour">
-                  {TIMESTAMP_FORMAT_LABELS["12-hour"]}
-                </SelectItem>
-                <SelectItem value="24-hour">
-                  {TIMESTAMP_FORMAT_LABELS["24-hour"]}
-                </SelectItem>
+                <SelectItem value="locale">{TIMESTAMP_FORMAT_LABELS.locale}</SelectItem>
+                <SelectItem value="12-hour">{TIMESTAMP_FORMAT_LABELS["12-hour"]}</SelectItem>
+                <SelectItem value="24-hour">{TIMESTAMP_FORMAT_LABELS["24-hour"]}</SelectItem>
               </SelectPopup>
             </Select>
           }
@@ -2331,12 +2317,8 @@ export function GeneralSettingsPanel() {
                 <SelectValue>{DIFF_LAYOUT_LABELS[settings.diffLayout]}</SelectValue>
               </SelectTrigger>
               <SelectPopup align="end" alignItemWithTrigger={false}>
-                <SelectItem value="stacked">
-                  {DIFF_LAYOUT_LABELS.stacked}
-                </SelectItem>
-                <SelectItem value="split">
-                  {DIFF_LAYOUT_LABELS.split}
-                </SelectItem>
+                <SelectItem value="stacked">{DIFF_LAYOUT_LABELS.stacked}</SelectItem>
+                <SelectItem value="split">{DIFF_LAYOUT_LABELS.split}</SelectItem>
               </SelectPopup>
             </Select>
           }

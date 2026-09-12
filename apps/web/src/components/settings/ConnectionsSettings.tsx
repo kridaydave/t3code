@@ -2978,13 +2978,9 @@ export function ConnectionsSettings() {
                 <SelectValue>{selectLabel}</SelectValue>
               </SelectTrigger>
               <SelectPopup align="end" alignItemWithTrigger={false}>
-                <SelectItem value={BACKEND_VALUE_WSL_OFF}>
-                  Off
-                </SelectItem>
+                <SelectItem value={BACKEND_VALUE_WSL_OFF}>Off</SelectItem>
                 {desktopWslState.distros.length === 0 ? (
-                  <SelectItem value={BACKEND_VALUE_DEFAULT_WSL}>
-                    Default distro
-                  </SelectItem>
+                  <SelectItem value={BACKEND_VALUE_DEFAULT_WSL}>Default distro</SelectItem>
                 ) : (
                   desktopWslState.distros.map((distro) => (
                     <SelectItem key={distro.name} value={distro.name}>

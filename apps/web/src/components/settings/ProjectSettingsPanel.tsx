@@ -1302,18 +1302,14 @@ function ProjectDetail({
                   </SelectValue>
                 </SelectTrigger>
                 <SelectPopup align="end" alignItemWithTrigger={false}>
-                  <SelectItem value="inherit">
-                    Use global default
-                  </SelectItem>
+                  <SelectItem value="inherit">Use global default</SelectItem>
                   <SelectItem value="repository">
                     {PROJECT_GROUPING_MODE_LABELS.repository}
                   </SelectItem>
                   <SelectItem value="repository_path">
                     {PROJECT_GROUPING_MODE_LABELS.repository_path}
                   </SelectItem>
-                  <SelectItem value="separate">
-                    {PROJECT_GROUPING_MODE_LABELS.separate}
-                  </SelectItem>
+                  <SelectItem value="separate">{PROJECT_GROUPING_MODE_LABELS.separate}</SelectItem>
                 </SelectPopup>
               </Select>
             }
