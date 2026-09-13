@@ -36,11 +36,11 @@ export const ProviderInstanceIcon = memo(function ProviderInstanceIcon(props: {
       data-provider-accent-color={props.accentColor}
     >
       {Icon ? (
-        <Icon className={cn("size-5 shrink-0 relative z-10", props.iconClassName)} aria-hidden />
+        <Icon className={cn("size-5 shrink-0 relative z-20", props.iconClassName)} aria-hidden />
       ) : (
         <span
           className={cn(
-            "text-[10px] font-semibold leading-none relative z-10",
+            "text-[10px] font-semibold leading-none relative z-20",
             props.iconClassName,
           )}
         >
