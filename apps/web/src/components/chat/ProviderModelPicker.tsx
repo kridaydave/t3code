@@ -159,7 +159,7 @@ export const ProviderModelPicker = memo(function ProviderModelPicker(props: {
     : null;
   const triggerTooltipContent = shortcutLabel
     ? `${props.triggerLabel ?? triggerLabel} · ${shortcutLabel}`
-    : props.triggerLabel ?? triggerLabel;
+    : (props.triggerLabel ?? triggerLabel);
 
   return (
     <Popover
