@@ -3541,15 +3541,24 @@ export const makeGitVcsDriverCore = Effect.fn("makeGitVcsDriverCore")(function* 
   // same workspace could otherwise overlap its `git pull --ff-only` and fail on
   // the repository lock.
   const pullLocksByCwd = new Map<string, Semaphore.Semaphore>();
-  const withPullLock = <A, E>(cwd: string, effect: Effect.Effect<A, E>): Effect.Effect<A, E> => {
-    const key = normalizeRepositoryPathsCacheKey(cwd);
-    let lock = pullLocksByCwd.get(key);
-    if (lock === undefined) {
-      lock = Semaphore.makeUnsafe(1);
-      pullLocksByCwd.set(key, lock);
-    }
-    return lock.withPermit(effect);
-  };
+  const withPullLock = <A, E>(cwd: string, effect: Effect.Effect<A, E>): Effect.Effect<A, E> =>
+    Effect.gen(function* () {
+      // Key by repository, not request directory: `cwd` may be any directory
+      // inside the worktree, so a root pull and a subdirectory pull must share
+      // one semaphore or their `git pull --ff-only` invocations can still
+      // overlap on the repository lock.
+      const key = yield* resolveGitCommonDir(cwd).pipe(
+        Effect.catchTags({
+          GitCommandError: () => Effect.succeed(normalizeRepositoryPathsCacheKey(cwd)),
+        }),
+      );
+      let lock = pullLocksByCwd.get(key);
+      if (lock === undefined) {
+        lock = Semaphore.makeUnsafe(1);
+        pullLocksByCwd.set(key, lock);
+      }
+      return yield* lock.withPermit(effect);
+    });
   const initRepoWithListRefsInvalidation: GitVcsDriver.GitVcsDriver["Service"]["initRepo"] = (
     input,
   ) =>

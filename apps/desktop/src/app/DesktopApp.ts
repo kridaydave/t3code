@@ -273,13 +273,14 @@ const startup = Effect.gen(function* () {
   const updates = yield* DesktopUpdates.DesktopUpdates;
   const environment = yield* DesktopEnvironment.DesktopEnvironment;
 
+  const pathBeforeShellProbe = process.env.PATH;
   yield* shellEnvironment.installIntoProcess;
   // Tell the server's fixPath to skip its own login-shell probe when the
   // desktop already hydrated PATH. Only set this marker when we actually
-  // knew which shell to probe (SHELL is set) — otherwise the server should
-  // do its own probe with the user's real shell (zsh, fish, ...) instead of
-  // trusting the desktop's fallback probe.
-  if ((process.env.SHELL ?? "").trim().length > 0) {
+  // knew which shell to probe (SHELL is set) and the probe produced a PATH —
+  // a failed or timed-out probe leaves PATH unchanged, and then the server
+  // should do its own probe instead of trusting an empty patch.
+  if ((process.env.SHELL ?? "").trim().length > 0 && process.env.PATH !== pathBeforeShellProbe) {
     process.env.__T3CODE_SHELL_ENV_INSTALLED = "1";
   }
   const hasCommandLinePasswordStore =

@@ -79,7 +79,9 @@ export const fixPath = Effect.fn("fixPath")(function* (): Effect.fn.Return<
   // started, skip the second login-shell probe. The parent desktop process has
   // already merged PATH and session variables into its own environment, and the
   // server inherits them directly. Re-running the probe would spawn an extra
-  // bash -ilc just to re-derive the same values.
+  // bash -ilc just to re-derive the same values. The desktop only sets the
+  // marker when its probe actually produced a PATH, so a failed or timed-out
+  // probe still falls through to the hydration below.
   try {
     hydratePosixHome(env);
   } catch (defect) {
