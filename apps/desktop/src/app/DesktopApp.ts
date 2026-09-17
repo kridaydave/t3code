@@ -280,7 +280,7 @@ const startup = Effect.gen(function* () {
   // knew which shell to probe (SHELL is set) and the probe produced a PATH —
   // a failed or timed-out probe leaves PATH unchanged, and then the server
   // should do its own probe instead of trusting an empty patch.
-  if ((process.env.SHELL ?? "").trim().length > 0 && process.env.PATH !== pathBeforeShellProbe) {
+  if ((process.env.SHELL ?? "").trim().length > 0) {
     process.env.__T3CODE_SHELL_ENV_INSTALLED = "1";
   }
   const hasCommandLinePasswordStore =
