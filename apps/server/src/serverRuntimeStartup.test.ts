@@ -135,6 +135,36 @@ it.effect("enqueueCommand fails queued work when readiness fails", () =>
   ),
 );
 
+it.effect("readiness is published before auto-pull starts", () =>
+  Effect.scoped(
+    Effect.gen(function* () {
+      const commandGate = yield* ServerRuntimeStartup.makeCommandGate;
+      const pullStarted = yield* Ref.make(false);
+      const pullDone = yield* Deferred.make<void, never>();
+
+      const syncAutoPull = Effect.gen(function* () {
+        yield* Ref.set(pullStarted, true);
+        yield* Deferred.succeed(pullDone, undefined).pipe(Effect.orDie);
+      });
+
+      const fiber = yield* commandGate.awaitCommandReady.pipe(Effect.forkScoped);
+
+      yield* Effect.yieldNow;
+      assert.equal(yield* Ref.get(pullStarted), false);
+
+      yield* commandGate.signalCommandReady;
+
+      const result = yield* Fiber.join(fiber);
+      assert.equal(result, undefined);
+
+      yield* syncAutoPull.pipe(Effect.forkScoped);
+      yield* Deferred.await(pullDone);
+
+      assert.equal(yield* Ref.get(pullStarted), true);
+    }),
+  ),
+);
+
 it.effect("resolveWelcomeBase derives cwd and project name from server config", () =>
   Effect.gen(function* () {
     const welcome = yield* ServerRuntimeStartup.resolveWelcomeBase.pipe(
