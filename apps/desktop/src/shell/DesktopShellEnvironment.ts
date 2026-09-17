@@ -63,7 +63,10 @@ export class DesktopShellEnvironmentCommandTimeoutError extends Schema.TaggedErr
 export class DesktopShellEnvironment extends Context.Service<
   DesktopShellEnvironment,
   {
-    readonly installIntoProcess: Effect.Effect<void>;
+    // True when a probe actually produced a PATH (even one identical to the
+    // inherited value). Failed or timed-out probes recover as an empty patch
+    // and report false, so callers can tell success apart from failure.
+    readonly installIntoProcess: Effect.Effect<boolean>;
   }
 >()("@t3tools/desktop/shell/DesktopShellEnvironment") {}
 
@@ -386,7 +389,7 @@ const readWindowsEnvironment = Effect.fn("desktop.shellEnvironment.readWindowsEn
 const installWindowsEnvironment = Effect.fn("desktop.shellEnvironment.installWindowsEnvironment")(
   function* (
     config: ShellEnvironmentConfig,
-  ): Effect.fn.Return<void, never, ChildProcessSpawner.ChildProcessSpawner> {
+  ): Effect.fn.Return<boolean, never, ChildProcessSpawner.ChildProcessSpawner> {
     // Concurrent, not sequential: these two probes are independent (only their
     // results are combined below) and each spawns its own PowerShell. Run in
     // series they sit at offset 0 of desktop.startup, before anything else, and
@@ -415,6 +418,7 @@ const installWindowsEnvironment = Effect.fn("desktop.shellEnvironment.installWin
     if (!config.env.FNM_MULTISHELL_PATH && profile.FNM_MULTISHELL_PATH) {
       config.env.FNM_MULTISHELL_PATH = profile.FNM_MULTISHELL_PATH;
     }
+    return Option.isSome(trimNonEmpty(profile.PATH)) || Option.isSome(trimNonEmpty(noProfile.PATH));
   },
 );
 
@@ -422,7 +426,7 @@ const installPosixEnvironment = Effect.fn("desktop.shellEnvironment.installPosix
   function* (
     config: ShellEnvironmentConfig,
   ): Effect.fn.Return<
-    void,
+    boolean,
     never,
     ChildProcessSpawner.ChildProcessSpawner | FileSystem.FileSystem
   > {
@@ -518,19 +522,25 @@ const installPosixEnvironment = Effect.fn("desktop.shellEnvironment.installPosix
         }
       }
     }
+
+    return Option.isSome(trimNonEmpty(shellEnvironment.PATH));
   },
 );
 
 const installShellEnvironment = (
   config: ShellEnvironmentConfig,
-): Effect.Effect<void, never, ChildProcessSpawner.ChildProcessSpawner | FileSystem.FileSystem> => {
+): Effect.Effect<
+  boolean,
+  never,
+  ChildProcessSpawner.ChildProcessSpawner | FileSystem.FileSystem
+> => {
   if (config.platform === "win32") {
     return installWindowsEnvironment(config);
   }
   if (config.platform === "darwin" || config.platform === "linux") {
     return installPosixEnvironment(config);
   }
-  return Effect.void;
+  return Effect.succeed(false);
 };
 
 /** @public Service construction is part of the canonical Effect module API. */

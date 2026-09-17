@@ -87,7 +87,7 @@ function runShellEnvironment(input: {
 
   const program = Effect.gen(function* () {
     const shellEnvironment = yield* DesktopShellEnvironment.DesktopShellEnvironment;
-    yield* shellEnvironment.installIntoProcess;
+    return yield* shellEnvironment.installIntoProcess;
   }).pipe(
     Effect.provide(
       DesktopShellEnvironment.layer.pipe(
@@ -108,7 +108,7 @@ describe("DesktopShellEnvironment", () => {
       };
       const commands: ChildProcess.Command[] = [];
 
-      yield* runShellEnvironment({
+      const producedPath = yield* runShellEnvironment({
         env,
         platform: "darwin",
         handler: (command) => {
@@ -126,6 +126,7 @@ describe("DesktopShellEnvironment", () => {
       assert.equal(env.PATH, "/opt/homebrew/bin:/usr/bin:/Users/test/.local/bin");
       assert.equal(env.SSH_AUTH_SOCK, "/tmp/secretive.sock");
       assert.equal(env.HOMEBREW_PREFIX, "/opt/homebrew");
+      assert.equal(producedPath, true);
     }),
   );
 
@@ -273,6 +274,48 @@ describe("DesktopShellEnvironment", () => {
 
       assert.equal(env.PATH, "/home/linuxbrew/.linuxbrew/bin:/usr/bin");
       assert.equal(env.SSH_AUTH_SOCK, "/tmp/secretive.sock");
+    }),
+  );
+
+  it.effect("reports success when the probe returns the inherited PATH unchanged", () =>
+    Effect.gen(function* () {
+      const env: NodeJS.ProcessEnv = {
+        SHELL: "/bin/zsh",
+        PATH: "/usr/bin",
+      };
+
+      const producedPath = yield* runShellEnvironment({
+        env,
+        platform: "linux",
+        handler: () => envOutput({ PATH: "/usr/bin" }),
+      });
+
+      assert.equal(env.PATH, "/usr/bin");
+      assert.equal(producedPath, true);
+    }),
+  );
+
+  it.effect("reports failure when the login-shell probe errors", () =>
+    Effect.gen(function* () {
+      const env: NodeJS.ProcessEnv = {
+        SHELL: "/bin/zsh",
+        PATH: "/usr/bin",
+      };
+
+      const producedPath = yield* runShellEnvironment({
+        env,
+        platform: "linux",
+        handler: () => "",
+        failure: PlatformError.systemError({
+          _tag: "PermissionDenied",
+          module: "ChildProcess",
+          method: "spawn",
+          pathOrDescriptor: "/bin/zsh",
+        }),
+      });
+
+      assert.equal(env.PATH, "/usr/bin");
+      assert.equal(producedPath, false);
     }),
   );
 
