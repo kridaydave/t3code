@@ -1025,6 +1025,14 @@ describe("resolveTerminalSelectionAutoscroll", () => {
     ).toBe(0);
     expect(
       resolveTerminalSelectionAutoscroll({
+        clientY: 0,
+        top: 0,
+        bottom: 200,
+        cellHeight: 16,
+      }),
+    ).toBe(0);
+    expect(
+      resolveTerminalSelectionAutoscroll({
         clientY: -1,
         top: 0,
         bottom: 200,
