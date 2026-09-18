@@ -4740,9 +4740,14 @@ export default function ChatView(props: ChatViewProps) {
         linkedThreadPullRequest,
         openSurface,
       );
+    // A panel the user closed stays closed: reopening it on every thread visit
+    // is the force-open loop reported when MR auto-assign links a PR.
+    const existingPanelState = selectThreadRightPanelState(panels.byThreadKey, activeThreadRef);
+    const panelDismissedByUser =
+      existingPanelState.surfaces.length > 0 && !existingPanelState.isOpen;
     // Following the selected linked PR does not open an unrelated panel, so it
     // remains available with proactive panels off. It still respects a later choice.
-    if (followSelectedPullRequest && linkedThreadPullRequest !== null) {
+    if (followSelectedPullRequest && linkedThreadPullRequest !== null && !panelDismissedByUser) {
       panels.openProactive(
         activeThreadRef,
         pullRequestSurface(linkedThreadPullRequest),
@@ -4773,7 +4778,8 @@ export default function ChatView(props: ChatViewProps) {
       } else if (
         !followSelectedPullRequest &&
         supportsPullRequests &&
-        linkedThreadPullRequest !== null
+        linkedThreadPullRequest !== null &&
+        !panelDismissedByUser
       ) {
         panels.openProactive(
           activeThreadRef,
