@@ -1412,10 +1412,12 @@ export class GhosttyTerminalSurface {
     this.selectionPointer = { x: event.clientX, y: event.clientY };
     const bounds = this.canvas.getBoundingClientRect();
     // The bottom-docked terminal is flush with the window edge, so the pointer
-    // can never go past bounds.bottom. Treat the edge row as the scroll zone.
+    // can never go past bounds.bottom. Treat the bottom edge row as the scroll
+    // zone; the top edge keeps a strict boundary so ordinary selections in the
+    // first rendered row don't scroll into scrollback.
     const edgeZone = Math.max(1, this.metrics.height);
     this.setSelectionAutoscroll(
-      event.clientY < bounds.top + edgeZone ? -1 : event.clientY > bounds.bottom - edgeZone ? 1 : 0,
+      event.clientY < bounds.top ? -1 : event.clientY > bounds.bottom - edgeZone ? 1 : 0,
     );
     const cell = this.cellAt(event.clientX, event.clientY);
     if (cell.x === this.selectionEnd?.x && cell.y === this.selectionEnd.y) return;

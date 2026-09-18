@@ -4768,6 +4768,7 @@ export default function ChatView(props: ChatViewProps) {
     if (eligibleLink && pullRequestsCapabilityKnown) {
       if (
         pullRequestsSurfaceAvailable &&
+        !panelDismissedByUser &&
         (visiblePullRequestCount > 1 || !hasLinkedPullRequestDetail || !supportsPullRequests)
       ) {
         panels.openProactive(
