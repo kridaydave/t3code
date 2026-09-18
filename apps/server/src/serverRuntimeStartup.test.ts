@@ -11,16 +11,29 @@ import * as Crypto from "effect/Crypto";
 import * as Deferred from "effect/Deferred";
 import * as Effect from "effect/Effect";
 import * as Fiber from "effect/Fiber";
+import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as PlatformError from "effect/PlatformError";
 import * as Ref from "effect/Ref";
 import * as Stream from "effect/Stream";
+import { HttpServer } from "effect/unstable/http";
 
 import * as ServerConfig from "./config.ts";
+import * as Keybindings from "./keybindings.ts";
+import * as EnvironmentAuth from "./auth/EnvironmentAuth.ts";
+import * as ServiceLauncherClient from "./cloud/serviceLauncherClient.ts";
+import * as ServerEnvironment from "./environment/ServerEnvironment.ts";
 import * as OrchestrationEngine from "./orchestration/Services/OrchestrationEngine.ts";
 import * as ProjectionSnapshotQuery from "./orchestration/Services/ProjectionSnapshotQuery.ts";
+import * as OrchestrationReactor from "./orchestration/Services/OrchestrationReactor.ts";
+import * as ExternalLauncher from "./process/externalLauncher.ts";
+import * as ProviderService from "./provider/Services/ProviderService.ts";
+import * as ProviderSessionDirectory from "./provider/Services/ProviderSessionDirectory.ts";
+import * as ProviderSessionReaper from "./provider/Services/ProviderSessionReaper.ts";
+import * as ServerLifecycleEvents from "./serverLifecycleEvents.ts";
 import * as ServerRuntimeStartup from "./serverRuntimeStartup.ts";
 import * as ServerSettings from "./serverSettings.ts";
+import * as AnalyticsService from "./telemetry/AnalyticsService.ts";
 import * as GitVcsDriver from "./vcs/GitVcsDriver.ts";
 
 it.effect("automatic pull only updates enabled, behind, clean default-branch checkouts", () =>
@@ -135,32 +148,128 @@ it.effect("enqueueCommand fails queued work when readiness fails", () =>
   ),
 );
 
-it.effect("readiness is published before auto-pull starts", () =>
+it.effect("publishes readiness without waiting for background auto-pull", () =>
   Effect.scoped(
     Effect.gen(function* () {
-      const commandGate = yield* ServerRuntimeStartup.makeCommandGate;
+      const pullGate = yield* Deferred.make<void, never>();
       const pullStarted = yield* Ref.make(false);
       const pullDone = yield* Deferred.make<void, never>();
+      const pulled: string[] = [];
+      const published = yield* Ref.make<string[]>([]);
 
-      const syncAutoPull = Effect.gen(function* () {
-        yield* Ref.set(pullStarted, true);
-        yield* Deferred.succeed(pullDone, undefined).pipe(Effect.orDie);
+      const git = {
+        statusDetails: () =>
+          Effect.succeed({
+            isRepo: true,
+            isDefaultBranch: true,
+            hasUpstream: true,
+            hasWorkingTreeChanges: false,
+            aheadCount: 0,
+            behindCount: 1,
+          } as never),
+        pullCurrentBranch: (cwd: string) =>
+          Effect.gen(function* () {
+            yield* Ref.set(pullStarted, true);
+            yield* Deferred.await(pullGate);
+            pulled.push(cwd);
+            yield* Deferred.succeed(pullDone, undefined);
+            return {
+              status: "pulled" as const,
+              refName: "main",
+              upstreamRef: "origin/main",
+            };
+          }),
+      } as unknown as GitVcsDriver.GitVcsDriver["Service"];
+
+      const program = Effect.gen(function* () {
+        const startup = yield* ServerRuntimeStartup.make();
+
+        yield* Effect.yieldNow;
+        yield* Effect.yieldNow;
+        assert.equal(yield* Ref.get(pullStarted), false);
+
+        yield* startup.markHttpListening;
+        // Readiness must resolve while the pull is still gated: the real
+        // startup flow must not wait for auto-pull before accepting
+        // commands. If auto-pull moved back before readiness, this never
+        // resolves and the test times out.
+        yield* startup.awaitCommandReady;
+
+        // Release the gate only after readiness resolved; the background
+        // pull then runs to completion.
+        yield* Deferred.succeed(pullGate, undefined);
+        yield* Deferred.await(pullDone);
+
+        assert.equal(yield* Ref.get(pullStarted), true);
+        assert.deepStrictEqual(pulled, ["/repo"]);
+        assert.deepStrictEqual(yield* Ref.get(published), ["welcome", "ready"]);
       });
 
-      const fiber = yield* commandGate.awaitCommandReady.pipe(Effect.forkScoped);
-
-      yield* Effect.yieldNow;
-      assert.equal(yield* Ref.get(pullStarted), false);
-
-      yield* commandGate.signalCommandReady;
-
-      const result = yield* Fiber.join(fiber);
-      assert.equal(result, undefined);
-
-      yield* syncAutoPull.pipe(Effect.forkScoped);
-      yield* Deferred.await(pullDone);
-
-      assert.equal(yield* Ref.get(pullStarted), true);
+      yield* program.pipe(
+        Effect.provideService(ServerConfig.ServerConfig, {
+          mode: "desktop",
+          host: "127.0.0.1",
+          port: 3773,
+          cwd: "/tmp/startup-ordering",
+          noBrowser: true,
+          startupPresentation: "browser",
+          autoBootstrapProjectFromCwd: false,
+        } as never),
+        Effect.provideService(Keybindings.Keybindings, { start: Effect.void } as never),
+        Effect.provideService(OrchestrationReactor.OrchestrationReactor, {
+          start: () => Effect.void,
+        } as never),
+        Effect.provideService(ProviderSessionReaper.ProviderSessionReaper, {
+          start: () => Effect.void,
+        } as never),
+        Effect.provideService(ServerLifecycleEvents.ServerLifecycleEvents, {
+          publish: (event: { readonly type: string }) =>
+            Ref.update(published, (events) => [...events, event.type]).pipe(Effect.as({} as never)),
+        } as never),
+        Effect.provideService(ServerEnvironment.ServerEnvironment, {
+          getDescriptor: Effect.succeed({} as never),
+        } as never),
+        Effect.provideService(ServiceLauncherClient.ServiceLauncherClient, {
+          prepareTrial: Effect.succeed(undefined),
+        } as never),
+        Effect.provideService(ProviderService.ProviderService, {
+          listSessions: () => Effect.succeed([]),
+        } as never),
+        Effect.provideService(ProviderSessionDirectory.ProviderSessionDirectory, {
+          listBindings: () => Effect.succeed([]),
+        } as never),
+        Effect.provideService(OrchestrationEngine.OrchestrationEngineService, {
+          dispatch: () => Effect.die("unused"),
+        } as never),
+        Effect.provideService(ProjectionSnapshotQuery.ProjectionSnapshotQuery, {
+          getCommandReadModel: () => Effect.succeed({ threads: [] }),
+          listActivitiesByKind: () => Effect.succeed([]),
+          getShellSnapshot: () =>
+            Effect.succeed({
+              projects: [{ id: ProjectId.make("/repo"), workspaceRoot: "/repo" }],
+            }),
+          getCounts: () => Effect.succeed({ threadCount: 0, projectCount: 0 }),
+        } as never),
+        Effect.provideService(GitVcsDriver.GitVcsDriver, git),
+        // Unreached in this configuration (desktop mode skips pairing auth,
+        // noBrowser skips the launcher, non-headless skips the HTTP server),
+        // but statically required by the startup flow.
+        Effect.provideService(EnvironmentAuth.EnvironmentAuth, {
+          issueStartupPairingUrl: () => Effect.die("unused"),
+          issueStartupPairingCredential: () => Effect.die("unused"),
+        } as never),
+        Effect.provideService(ExternalLauncher.ExternalLauncher, {
+          launchBrowser: () => Effect.die("unused"),
+        } as never),
+        Effect.provideService(HttpServer.HttpServer, {} as never),
+        Effect.provide(
+          Layer.mergeAll(
+            ServerSettings.layerTest({ defaultAutoPull: true }),
+            AnalyticsService.AnalyticsService.layerTest,
+            NodeServices.layer,
+          ),
+        ),
+      );
     }),
   ),
 );

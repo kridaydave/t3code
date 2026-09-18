@@ -1,7 +1,9 @@
+// @effect-diagnostics nodeBuiltinImport:off
+import * as NodeFS from "node:fs";
 import * as NodeOS from "node:os";
+import * as NodePath from "node:path";
 import { assert, it } from "@effect/vitest";
 import * as Effect from "effect/Effect";
-import * as Layer from "effect/Layer";
 import * as NodeServices from "@effect/platform-node/NodeServices";
 
 import { hydratePosixHome } from "./os-jank.ts";
@@ -59,13 +61,31 @@ it.effect("fixPath skips hydratePosixPath when __T3CODE_SHELL_ENV_INSTALLED is 1
   }),
 );
 
-it.effect("fixPath hydrates PATH when __T3CODE_SHELL_ENV_INSTALLED marker is absent", () =>
+it.effect("fixPath hydrates PATH from the login shell when the marker is absent", () =>
   Effect.gen(function* () {
-    const env: NodeJS.ProcessEnv = { HOME: "/home/user" };
-    yield* fixPath().pipe(
-      Effect.provideService(HostProcessPlatform, "linux"),
-      Effect.provideService(HostProcessEnvironment, env),
-      Effect.provide(NodeServices.layer),
-    );
+    if (process.platform === "win32") return;
+    const dir = NodeFS.mkdtempSync(NodePath.join(NodeOS.tmpdir(), "t3-os-jank-probe-"));
+    try {
+      const fakeShell = NodePath.join(dir, "fake-shell");
+      NodeFS.writeFileSync(
+        fakeShell,
+        [
+          "#!/bin/sh",
+          "printf '%s\\n' '__T3CODE_ENV_PATH_START__'",
+          "printf '%s\\n' '/sentinel/probe/bin'",
+          "printf '%s\\n' '__T3CODE_ENV_PATH_END__'",
+        ].join("\n"),
+      );
+      NodeFS.chmodSync(fakeShell, 0o755);
+      const env: NodeJS.ProcessEnv = { SHELL: fakeShell, HOME: "/home/user", PATH: "/usr/bin" };
+      yield* fixPath().pipe(
+        Effect.provideService(HostProcessPlatform, "linux"),
+        Effect.provideService(HostProcessEnvironment, env),
+        Effect.provide(NodeServices.layer),
+      );
+      assert.equal(env.PATH, "/sentinel/probe/bin:/usr/bin");
+    } finally {
+      NodeFS.rmSync(dir, { recursive: true, force: true });
+    }
   }),
 );
