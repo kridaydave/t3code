@@ -3,7 +3,6 @@ import { type EnvironmentId, ThreadId } from "@t3tools/contracts";
 import { beforeEach, describe, expect, it } from "vite-plus/test";
 
 import {
-  isPanelDismissedByUser,
   migratePersistedRightPanelState,
   pullRequestSurface,
   pullRequestSurfaceId,
@@ -964,42 +963,14 @@ describe("rightPanelStore", () => {
     useRightPanelStore.getState().openTerminal(refA, "term-1");
     useRightPanelStore.getState().closeSurface(refA, "terminal:term-1");
 
-    const byThreadKey = useRightPanelStore.getState().byThreadKey;
     // The empty entry survives pruning so the dismissal is not forgotten.
-    expect(byThreadKey).toHaveProperty([scopedThreadKey(refA), "proactiveDismissed"], true);
-    expect(isPanelDismissedByUser(selectThreadRightPanelState(byThreadKey, refA))).toBe(true);
-  });
-
-  it("clears the dismissal marker when content returns", () => {
-    useRightPanelStore.getState().openTerminal(refA, "term-1");
-    useRightPanelStore.getState().closeAllSurfaces(refA);
-    useRightPanelStore.getState().open(refA, "diff");
-
-    const state = selectThreadRightPanelState(useRightPanelStore.getState().byThreadKey, refA);
-    expect(state.proactiveDismissed).toBeUndefined();
-    expect(isPanelDismissedByUser(state)).toBe(false);
-  });
-
-  it("reports dismissal for a closed panel but not for a fresh thread", () => {
-    expect(
-      isPanelDismissedByUser(
-        selectThreadRightPanelState(useRightPanelStore.getState().byThreadKey, refA),
-      ),
-    ).toBe(false);
-
-    useRightPanelStore.getState().open(refA, "diff");
-    useRightPanelStore.getState().close(refA);
-    expect(
-      isPanelDismissedByUser(
-        selectThreadRightPanelState(useRightPanelStore.getState().byThreadKey, refA),
-      ),
-    ).toBe(true);
-
-    useRightPanelStore.getState().show(refA);
-    expect(
-      isPanelDismissedByUser(
-        selectThreadRightPanelState(useRightPanelStore.getState().byThreadKey, refA),
-      ),
-    ).toBe(false);
+    expect(useRightPanelStore.getState().byThreadKey).toEqual({
+      [scopedThreadKey(refA)]: {
+        isOpen: false,
+        activeSurfaceId: null,
+        surfaces: [],
+        proactiveDismissed: true,
+      },
+    });
   });
 });

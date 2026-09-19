@@ -285,12 +285,6 @@ const upsertSurface = (
   activeSurfaceId: activate ? surface.id : current.activeSurfaceId,
 });
 
-// Closing the final surface dismisses the panel as firmly as the close
-// button: record it so proactive opens don't mistake the pruned empty state
-// for a thread the user never dismissed.
-const markProactiveDismissed = (state: ThreadRightPanelState): ThreadRightPanelState =>
-  state.surfaces.length === 0 ? { ...state, proactiveDismissed: true } : state;
-
 const updateThread = (
   byThreadKey: Record<string, ThreadRightPanelState>,
   threadKey: string,
@@ -695,7 +689,7 @@ export const useRightPanelStore = create<RightPanelStoreState>()(
               const index = current.surfaces.findIndex((entry) => entry.id === surfaceId);
               const surfaces = current.surfaces.filter((entry) => entry.id !== surfaceId);
               const fallback = surfaces[Math.min(index, surfaces.length - 1)] ?? null;
-              return markProactiveDismissed({
+              return {
                 ...current,
                 isOpen: surfaces.length > 0 && current.isOpen,
                 surfaces,
@@ -703,7 +697,8 @@ export const useRightPanelStore = create<RightPanelStoreState>()(
                   current.activeSurfaceId === surfaceId
                     ? (fallback?.id ?? null)
                     : current.activeSurfaceId,
-              });
+                proactiveDismissed: true,
+              };
             }
             return {
               ...current,
@@ -737,19 +732,21 @@ export const useRightPanelStore = create<RightPanelStoreState>()(
             if (index < 0) return current;
             const surfaces = current.surfaces.filter((surface) => surface.id !== surfaceId);
             if (current.activeSurfaceId !== surfaceId) {
-              return markProactiveDismissed({
+              return {
                 ...current,
                 isOpen: surfaces.length > 0 && current.isOpen,
                 surfaces,
-              });
+                proactiveDismissed: true,
+              };
             }
             const fallback = surfaces[Math.min(index, surfaces.length - 1)] ?? null;
-            return markProactiveDismissed({
+            return {
               ...current,
               isOpen: surfaces.length > 0 && current.isOpen,
               surfaces,
               activeSurfaceId: fallback?.id ?? null,
-            });
+              proactiveDismissed: true,
+            };
           }),
         ),
       closeOtherSurfaces: (ref, surfaceId) =>
@@ -921,15 +918,6 @@ export function selectThreadRightPanelState(
 ): ThreadRightPanelState {
   if (!ref) return EMPTY_THREAD_STATE;
   return byThreadKey[scopedThreadKey(ref)] ?? EMPTY_THREAD_STATE;
-}
-
-/**
- * A panel the user closed stays closed. `close` leaves surfaces behind so the
- * closed state is visible, but closing the final surface prunes back to the
- * default state — `proactiveDismissed` preserves that dismissal.
- */
-export function isPanelDismissedByUser(state: ThreadRightPanelState): boolean {
-  return !state.isOpen && (state.surfaces.length > 0 || state.proactiveDismissed === true);
 }
 
 export function selectActiveRightPanel(
