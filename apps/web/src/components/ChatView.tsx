@@ -180,6 +180,7 @@ import { buildTemporaryWorktreeBranchName } from "@t3tools/shared/git";
 import { useMediaQuery } from "../hooks/useMediaQuery";
 import { RIGHT_PANEL_INLINE_LAYOUT_MEDIA_QUERY } from "../rightPanelLayout";
 import {
+  isPanelDismissedByUser,
   pullRequestSurface,
   selectActiveRightPanel,
   selectActiveRightPanelSurface,
@@ -4742,9 +4743,10 @@ export default function ChatView(props: ChatViewProps) {
       );
     // A panel the user closed stays closed: reopening it on every thread visit
     // is the force-open loop reported when MR auto-assign links a PR.
+    // Closing the final surface prunes to the default state, so the dismissal
+    // marker in the store is what remembers it.
     const existingPanelState = selectThreadRightPanelState(panels.byThreadKey, activeThreadRef);
-    const panelDismissedByUser =
-      existingPanelState.surfaces.length > 0 && !existingPanelState.isOpen;
+    const panelDismissedByUser = isPanelDismissedByUser(existingPanelState);
     // Following the selected linked PR does not open an unrelated panel, so it
     // remains available with proactive panels off. It still respects a later choice.
     if (followSelectedPullRequest && linkedThreadPullRequest !== null && !panelDismissedByUser) {
