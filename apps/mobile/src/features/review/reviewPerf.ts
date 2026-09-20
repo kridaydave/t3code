@@ -18,68 +18,27 @@ export function isReviewPerfEnabled(): boolean {
   return typeof __DEV__ !== "undefined" ? __DEV__ : false;
 }
 
-interface ReviewMeasureStarted {
-  readonly startMark: string;
-  readonly endMark: string;
-  readonly startedAt: number;
-}
-
-/** Opens a sequenced perf interval for a review task and returns its marks. */
-function startReviewMeasure(
-  name: string,
-  perf: ReviewPerformanceLike | null,
-): ReviewMeasureStarted {
-  const marker = `${REVIEW_PERF_PREFIX}.${name}.${reviewPerfSequence++}`;
-  const startMark = `${marker}.start`;
-  const endMark = `${marker}.end`;
-  const startedAt = perf?.now?.() ?? Date.now();
-
-  perf?.mark?.(startMark);
-  return { startMark, endMark, startedAt };
-}
-
-/** Closes the interval from startReviewMeasure, records it, and logs the duration. */
-function finishReviewMeasure(
-  name: string,
-  perf: ReviewPerformanceLike | null,
-  started: ReviewMeasureStarted,
-): void {
-  const durationMs = (perf?.now?.() ?? Date.now()) - started.startedAt;
-  perf?.mark?.(started.endMark);
-  perf?.measure?.(`${REVIEW_PERF_PREFIX}.${name}`, started.startMark, started.endMark);
-  perf?.clearMarks?.(started.startMark);
-  perf?.clearMarks?.(started.endMark);
-  console.log(`[review-perf] ${name}`, { durationMs: Number(durationMs.toFixed(2)) });
-}
-
 export function measureReviewWork<T>(name: string, callback: () => T): T {
   if (!isReviewPerfEnabled()) {
     return callback();
   }
 
   const perf = getPerformance();
-  const started = startReviewMeasure(name, perf);
+  const marker = `${REVIEW_PERF_PREFIX}.${name}.${reviewPerfSequence++}`;
+  const startMark = `${marker}.start`;
+  const endMark = `${marker}.end`;
+  const startedAt = perf?.now?.() ?? Date.now();
+
+  perf?.mark?.(startMark);
   try {
     return callback();
   } finally {
-    finishReviewMeasure(name, perf, started);
-  }
-}
-
-export async function measureReviewAsyncWork<T>(
-  name: string,
-  callback: () => Promise<T>,
-): Promise<T> {
-  if (!isReviewPerfEnabled()) {
-    return callback();
-  }
-
-  const perf = getPerformance();
-  const started = startReviewMeasure(name, perf);
-  try {
-    return await callback();
-  } finally {
-    finishReviewMeasure(name, perf, started);
+    const durationMs = (perf?.now?.() ?? Date.now()) - startedAt;
+    perf?.mark?.(endMark);
+    perf?.measure?.(`${REVIEW_PERF_PREFIX}.${name}`, startMark, endMark);
+    perf?.clearMarks?.(startMark);
+    perf?.clearMarks?.(endMark);
+    console.log(`[review-perf] ${name}`, { durationMs: Number(durationMs.toFixed(2)) });
   }
 }
 
