@@ -245,7 +245,7 @@ export function AddProviderInstanceDialog({
         <WizardPanel>
           {/* p/m bleed keeps the selected driver's outset ring-2 visible while
               AnimatedHeight clips overflow during wizard step transitions. */}
-          <div className={cn("grid gap-2 p-[3px] -m-[3px]", wizardStep !== 0 && "hidden")}>
+          <div className={cn("grid gap-2 p-0.75 -m-[3px]", wizardStep !== 0 && "hidden")}>
             <div id="add-instance-driver-label" className="text-sm font-medium text-foreground">
               Driver
             </div>
