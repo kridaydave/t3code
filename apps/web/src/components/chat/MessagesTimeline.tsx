@@ -1653,7 +1653,10 @@ function TimelineMinimapNavigationButton({
               previous ? "bottom-[calc(100%+2px)]" : "top-[calc(100%+2px)]",
               // A disabled (invisible) nav button must never swallow clicks
               // aimed at the first/last turn marker just above/below it.
-              disabled
+              // Below the navigation reach the buttons sit on the content
+              // column, so they stay pointer-inert there too; keyboard focus
+              // still reaches them.
+              disabled || !interactive
                 ? "pointer-events-none"
                 : "pointer-events-none group-hover/minimap:pointer-events-auto focus-within:pointer-events-auto",
             )}
