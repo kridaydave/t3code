@@ -21,7 +21,6 @@ import {
   type ThreadSortInput,
 } from "../lib/threadSort";
 import type { SidebarThreadSummary, Thread } from "../types";
-import { cn } from "../lib/utils";
 import { isLatestTurnSettled } from "../session-logic";
 
 export function shouldNavigateAfterThreadPark(input: {

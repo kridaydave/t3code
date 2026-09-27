@@ -153,10 +153,8 @@ import {
 } from "./SnapShotAttachmentDetails";
 import { ProposedPlanCard } from "./ProposedPlanCard";
 import { ChangedFilesCard } from "./ChangedFilesTree";
-import { useAtomValue } from "@effect/atom-react";
 import { useFileContextMenuHandler } from "../../fileContextMenu";
 import { useProject, useThread } from "../../state/entities";
-import { serverEnvironment } from "../../state/server";
 import {
   CHAT_TIMELINE_ANCHOR_OFFSET,
   readTimelinePosition,
@@ -3424,9 +3422,6 @@ function AssistantChangedFilesSectionInner({
     thread && thread.projectId
       ? { environmentId: thread.environmentId, projectId: thread.projectId }
       : null,
-  );
-  const serverConfig = useAtomValue(
-    serverEnvironment.configValueAtom(ctx.activeThreadEnvironmentId),
   );
   const onFileContextMenu = useFileContextMenuHandler(ctx.activeThreadEnvironmentId);
 

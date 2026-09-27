@@ -36,14 +36,6 @@ export const IsoDateTime = Schema.String;
 export type IsoDateTime = typeof IsoDateTime.Type;
 
 /**
- * Wire codec for server→client arrays whose element unions grow over time
- * (new literal members, new struct variants). Decoding drops elements the
- * current build cannot decode instead of failing the whole payload — a client
- * has to keep decoding configs sent by servers newer than itself, and
- * rejecting the payload would take down the connection over data the client
- * couldn't act on anyway. Encoding is the plain array encoding.
- */
-/**
  * Same idea for one optional value whose literal set grows over time: a
  * member this build does not know decodes as absent rather than failing the
  * enclosing struct. Encoding is the plain encoding.
@@ -107,6 +99,14 @@ export const OmittedWhenNull = <Value extends Schema.Top>(value: Value) => {
   );
 };
 
+/**
+ * Wire codec for server→client arrays whose element unions grow over time
+ * (new literal members, new struct variants). Decoding drops elements the
+ * current build cannot decode instead of failing the whole payload — a client
+ * has to keep decoding configs sent by servers newer than itself, and
+ * rejecting the payload would take down the connection over data the client
+ * couldn't act on anyway. Encoding is the plain array encoding.
+ */
 export const ForwardCompatibleArray = <Element extends Schema.Top>(element: Element) => {
   const decodeElement = Schema.decodeUnknownOption(element as never);
   return Schema.Array(Schema.Unknown).pipe(
